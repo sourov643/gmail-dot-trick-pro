@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gmail Dot Trick — Pro</title>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<style>
+  :root{
+    --bg1:#0f1724; --bg2:#041229; --card: rgba(255,255,255,0.03);
+    --text:#e6eef8; --muted:#9aa6bf; --accent:#7c3aed;
+    --glass: rgba(255,255,255,0.04);
+    --max-width:1100px;
+  }
+  :root.light{
+    --bg1:#f8fafc; --bg2:#eef2ff; --card: rgba(0,0,0,0.04);
+    --text:#071028; --muted:#475569; --accent:#7c3aed;
+    --glass: rgba(255,255,255,0.6);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    min-height:100vh; color:var(--text);
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.14), transparent 8%),
+                linear-gradient(180deg, var(--bg1), var(--bg2));
+    display:flex; align-items:center; justify-content:center; padding:28px;
+  }
+  .app{
+    width:100%; max-width:var(--max-width); border-radius:14px; padding:18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    box-shadow: 0 20px 50px rgba(2,6,23,0.6);
+    border:1px solid rgba(255,255,255,0.03);
+    backdrop-filter: blur(6px);
+  }
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;
+    background:linear-gradient(135deg,var(--accent),#06b6d4); box-shadow:0 8px 30px rgba(6,182,212,0.08)}
+  h1{margin:0;font-size:20px;letter-spacing:0.2px}
+  .sub{margin:0;color:var(--muted);font-size:13px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent),#06b6d4);color:white}
+  .ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer}
+  .small{padding:6px 8px;font-size:13px}
+  main{display:grid;grid-template-columns:1fr 420px;gap:18px;margin-top:16px}
+  @media(max-width:980px){ main{grid-template-columns:1fr} }
+
+  .panel{background:var(--card);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03)}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  input[type="text"], input[type="number"], select, textarea {
+    width:100%; padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);
+    background:transparent;color:var(--text); outline:none;font-size:15px;
+  }
+  .row{display:flex;gap:8px;align-items:center}
+  .previewBox{height:56px;border-radius:8px;padding:8px;display:flex;align-items:center;gap:12px}
+  .previewSample{width:44px;height:44;border-radius:8px;background:linear-gradient(135deg,var(--accent),#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+  .liveText{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; color:var(--text)}
+
+  .result-controls{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .result-list{max-height:520px;overflow:auto;margin-top:12px;border-radius:10px;padding:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
+  .item{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:8px;margin-bottom:8px;background:rgba(255,255,255,0.02)}
+  .mail{font-family:ui-monospace, Menlo, monospace;color:var(--text);word-break:break-all}
+  .actions{display:flex;gap:8px;align-items:center}
+
+  .meta{font-size:13px;color:var(--muted);margin-top:10px}
+  .search{display:flex;gap:8px;align-items:center}
+  .progOuter{height:8px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden}
+  .progInner{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#06b6d4)}
+
+  .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}
+  .chip{padding:6px 8px;border-radius:999px;background:rgba(0,0,0,0.06);font-size:13px;color:var(--muted)}
+
+  /* small animations */
+  .fade{transition:all .18s ease}
+  .typing{overflow:hidden;border-right:2px solid rgba(255,255,255,0.08);white-space:nowrap}
+
+  /* saved panel */
+  .saved-list{max-height:160px;overflow:auto;margin-top:8px}
+  .saved-item{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:8px;margin-bottom:6px;background:rgba(255,255,255,0.02)}
+  /* checkbox */
+  input[type="checkbox"]{width:18px;height:18px}
+  /* small */
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="brand">
+      <div class="logo">G•D</div>
+      <div>
+        <h1 id="title">Gmail Dot Trick — Pro</h1>
+        <p class="sub">Dot permutations generator — copy, export, share & save. (No password mode)</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div style="display:flex;gap:8px;align-items:center">
+        <label class="muted" style="font-size:13px">Accent</label>
+        <input type="color" id="accentPicker" value="#7c3aed" title="Pick accent color">
+      </div>
+      <button class="ghost small" id="themeToggle">Toggle Light</button>
+      <button class="btn" id="generateBtn">Generate</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: main controls -->
+    <section class="panel">
+      <label>Base username (no dots)</label>
+      <input id="username" type="text" placeholder="e.g. saurav" value="saurav">
+
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <div style="flex:1">
+          <label>Domain</label>
+          <input id="domain" type="text" value="@gmail.com">
+        </div>
+        <div style="width:120px">
+          <label>Max generate</label>
+          <input id="limit" type="number" value="200" min="1" max="20000">
+        </div>
+      </div>
+
+      <label style="margin-top:10px">+tag (optional)</label>
+      <input id="plustag" type="text" placeholder="+news">
+
+      <div style="margin-top:10px" class="previewBox">
+        <div class="previewSample" id="previewSample">G</div>
+        <div>
+          <div style="font-size:13px;color:var(--muted)">Live preview</div>
+          <div class="liveText" id="livePreview">saurav@gmail.com</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="generateBtn2">Generate</button>
+        <button class="ghost small" id="randomBtn">Randomize</button>
+        <button class="ghost small" id="saveBtn">Save Results</button>
+        <button class="ghost small" id="loadBtn">Load Saved</button>
+        <button class="ghost small" id="clearSavedBtn">Clear Saved</button>
+      </div>
+
+      <div style="margin-top:12px" class="search">
+        <input id="search" type="text" placeholder="Search / Filter results">
+        <div style="min-width:120px">
+          <label style="font-size:12px;color:var(--muted)">Select All</label>
+          <div><input type="checkbox" id="selectAll"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="progOuter" aria-hidden><div class="progInner" id="progInner"></div></div>
+        <div class="meta" id="meta">Permutations: —</div>
+      </div>
+
+      <div style="margin-top:12px" class="meta">
+        <strong>Export:</strong>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="ghost small" id="copySelectedBtn">Copy Selected</button>
+          <button class="ghost small" id="copyAllBtn">Copy All</button>
+          <button class="ghost small" id="downloadTxt">Download .txt</button>
+          <button class="ghost small" id="downloadCsv">Download .csv</button>
+          <button class="ghost small" id="downloadJson">Download .json</button>
+          <button class="ghost small" id="shareBtn">Share (WhatsApp)</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px" class="meta">
+        <strong>Saved sets</strong>
+        <div class="saved-list" id="savedList"></div>
+      </div>
+    </section>
+
+    <!-- Right: results -->
+    <aside class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="chip">Count: <span id="count">0</span></div>
+          <div class="chip">Showing: <span id="showing">0</span></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div class="muted">Sound</div>
+          <input type="checkbox" id="soundToggle" checked>
+        </div>
+      </div>
+
+      <div class="result-list" id="results"></div>
+      <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="ghost small" id="clearBtn">Clear</button>
+      </div>
+    </aside>
+  </main>
+
+  <div class="footer">
+    <div class="muted">Made with ❤️ — Dot trick pro</div>
+    <div class="muted">Limit safety: 20,000 permutations</div>
+  </div>
+</div>
+
+<!-- confetti -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+<script>
+/* ----------------------
+   Utility & UI wiring
+   ---------------------- */
+const el = id => document.getElementById(id);
+const username = el('username');
+const domain = el('domain');
+const plustag = el('plustag');
+const limitEl = el('limit');
+const generateBtn = el('generateBtn');
+const generateBtn2 = el('generateBtn2');
+const randomBtn = el('randomBtn');
+const resultsEl = el('results');
+const livePreview = el('livePreview');
+const previewSample = el('previewSample');
+const meta = el('meta');
+const progInner = el('progInner');
+const countEl = el('count');
+const showingEl = el('showing');
+const copyAllBtn = el('copyAllBtn');
+const copySelectedBtn = el('copySelectedBtn');
+const downloadTxt = el('downloadTxt');
+const downloadCsv = el('downloadCsv');
+const downloadJson = el('downloadJson');
+const shareBtn = el('shareBtn');
+const searchEl = el('search');
+const selectAll = el('selectAll');
+const saveBtn = el('saveBtn');
+const loadBtn = el('loadBtn');
+const clearSavedBtn = el('clearSavedBtn');
+const savedList = el('savedList');
+const clearBtn = el('clearBtn');
+const themeToggle = el('themeToggle');
+const accentPicker = el('accentPicker');
+const titleEl = el('title');
+const soundToggle = el('soundToggle');
+
+let currentResults = [];
+let filteredResults = [];
+let HARD_LIMIT = 20000;
+
+/* Theme init */
+(function initTheme(){
+  const saved = localStorage.getItem('gd_theme_light');
+  if(saved === '1'){ document.documentElement.classList.add('light'); themeToggle.textContent='Toggle Dark'; }
+  else { document.documentElement.classList.remove('light'); themeToggle.textContent='Toggle Light'; }
+  const accent = localStorage.getItem('gd_accent'); if(accent) accentPicker.value = accent;
+  setAccent(accentPicker.value);
+})();
+themeToggle.addEventListener('click', ()=>{
+  const isLight = document.documentElement.classList.toggle('light');
+  localStorage.setItem('gd_theme_light', isLight ? '1' : '0');
+  themeToggle.textContent = isLight ? 'Toggle Dark' : 'Toggle Light';
+});
+accentPicker.addEventListener('input', ()=> setAccent(accentPicker.value));
+function setAccent(c){
+  document.documentElement.style.setProperty('--accent', c);
+  localStorage.setItem('gd_accent', c);
+}
+
+/* tiny typing animation */
+(function typing(){
+  const text = 'Gmail Dot Trick — Pro';
+  let i=0; titleEl.textContent='';
+  const id = setInterval(()=>{ titleEl.textContent += text[i++]; if(i>=text.length) clearInterval(id); }, 24);
+})();
+
+/* Audio click via WebAudio */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function clickSound(){
+  if(!soundToggle.checked) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type='sine'; o.frequency.value = 880;
+  g.gain.value = 0.0015;
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.04);
+  g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.08);
+  setTimeout(()=>{ try{ o.stop(); }catch(e){} }, 90);
+}
+
+/* confetti helper */
+function doConfetti(){ confetti({particleCount:60,spread:70,origin:{y:0.6}}); }
+
+/* helpers */
+function calcPermutations(n){ if(n<=0) return 0; return Math.pow(2, Math.max(0,n-1)); }
+
+/* generate in batches to keep UI responsive for big counts */
+function generateDotVariants(name, limit=200, onProgress=null){
+  name = name.replace(/\./g,'').trim();
+  const n = name.length;
+  if(n<=0) return [];
+  const total = calcPermutations(n);
+  const toGenerate = Math.min(total, limit);
+  const results = [];
+  // produce sequential masks
+  let mask = 0, count=0;
+  const batch = 1000;
+  return new Promise((resolve)=>{
+    function step(){
+      let k=0;
+      while(mask < total && count < toGenerate && k < batch){
+        let out='';
+        for(let i=0;i<n;i++){
+          out+=name[i];
+          if(i<n-1){
+            if((mask >> i) & 1) out += '.';
+          }
+        }
+        results.push(out);
+        mask++; count++; k++;
+      }
+      if(onProgress) onProgress(Math.round((count/toGenerate)*100));
+      if(mask < total && count < toGenerate){
+        setTimeout(step, 1);
+      } else {
+        resolve(results);
+      }
+    }
+    step();
+  });
+}
+
+/* UI updates */
+function updateLivePreview(){
+  const base = username.value || 'username';
+  const plus = plustag.value ? (plustag.value.startsWith('+')?plustag.value: '+'+plustag.value) : '';
+  const dom = domain.value || '@gmail.com';
+  const sample = `${base}${plus}${dom}`;
+  livePreview.textContent = sample;
+  previewSample.textContent = (base[0]||'G').toUpperCase();
+}
+username.addEventListener('input', ()=>{
+  updateLivePreview();
+  updateMeta();
+});
+domain.addEventListener('input', updateLivePreview);
+plustag.addEventListener('input', updateLivePreview);
+updateLivePreview();
+
+/* Update meta */
+function updateMeta(){
+  const n = (username.value||'').replace(/\./g,'').length;
+  const total = calcPermutations(n);
+  meta.textContent = `Permutations possible: ${total.toLocaleString()}`;
+}
+updateMeta();
+
+/* Render results */
+function renderResults(list){
+  resultsEl.innerHTML = '';
+  filteredResults = list.slice();
+  showingEl.textContent = filteredResults.length;
+  countEl.textContent = list.length;
+  if(list.length === 0){
+    resultsEl.innerHTML = '<div class="muted">No results</div>';
+    return;
+  }
+  for(let i=0;i<list.length;i++){
+    const email = list[i];
+    const div = document.createElement('div'); div.className='item fade';
+    const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center'; left.style.gap='10px';
+    const cb = document.createElement('input'); cb.type='checkbox'; cb.dataset.email = email;
+    left.appendChild(cb);
+    const span = document.createElement('div'); span.className='mail'; span.textContent = email;
+    left.appendChild(span);
+    const actions = document.createElement('div'); actions.className='actions';
+    const copyBtn = document.createElement('button'); copyBtn.className='ghost small'; copyBtn.textContent='Copy';
+    copyBtn.addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText(email); clickSound(); doConfetti(); copyBtn.textContent='Copied!'; setTimeout(()=>copyBtn.textContent='Copy',900); }
+      catch(e){ alert('Copy failed.'); }
+    });
+    actions.appendChild(copyBtn);
+    div.appendChild(left);
+    div.appendChild(actions);
+    resultsEl.appendChild(div);
+  }
+}
+
+/* search filter */
+searchEl.addEventListener('input', ()=>{
+  const q = searchEl.value.trim().toLowerCase();
+  if(!q){ renderResults(currentResults); return; }
+  const filtered = currentResults.filter(x => x.toLowerCase().includes(q));
+  renderResults(filtered);
+});
+
+/* select all */
+selectAll.addEventListener('change', ()=>{
+  const cbs = resultsEl.querySelectorAll('input[type="checkbox"]');
+  cbs.forEach(ch => ch.checked = selectAll.checked);
+});
+
+/* Generate handler */
+async function doGenerate(){
+  const base = (username.value||'').replace(/\s+/g,'').replace(/^@+/, '').replace(/\./g,'');
+  if(!base){ alert('Please enter base username'); return; }
+  const limit = Math.max(1, Math.min(parseInt(limitEl.value)||200, HARD_LIMIT));
+  const totalPossible = calcPermutations(base.length);
+  if(limit > totalPossible) limitEl.value = totalPossible;
+  // progress UI
+  progInner.style.width = '0%';
+  progInner.parentElement.style.visibility = 'visible';
+  // generate
+  generateBtn.disabled = true; generateBtn2.disabled = true;
+  const onProgress = (p)=> progInner.style.width = p+'%';
+  currentResults = await generateDotVariants(base, limit, onProgress);
+  // append plus and domain
+  const dom = (domain.value||'@gmail.com'); const plus = (plustag.value||'');
+  currentResults = currentResults.map(v=>{
+    const pd = dom.startsWith('@')? dom : ('@'+dom);
+    const p = plus? (plus.startsWith('+')? plus: '+'+plus) : '';
+    return `${v}${p}${pd}`;
+  });
+  renderResults(currentResults);
+  progInner.style.width = '100%';
+  countEl.textContent = currentResults.length;
+  showingEl.textContent = currentResults.length;
+  generateBtn.disabled = false; generateBtn2.disabled = false;
+  clickSound();
+  doConfetti();
+}
+
+/* Randomize */
+function doRandomize(){
+  if(currentResults.length === 0){ alert('Generate first'); return; }
+  for(let i=currentResults.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [currentResults[i], currentResults[j]] = [currentResults[j], currentResults[i]];
+  }
+  renderResults(currentResults);
+  clickSound();
+}
+
+/* Copy All / Copy Selected */
+copyAllBtn.addEventListener('click', async ()=>{
+  if(currentResults.length===0){ alert('No results'); return; }
+  try{ await navigator.clipboard.writeText(currentResults.join('\n')); clickSound(); doConfetti(); alert('Copied all'); } catch(e){ alert('Copy failed'); }
+});
+copySelectedBtn.addEventListener('click', async ()=>{
+  const checked = Array.from(resultsEl.querySelectorAll('input[type="checkbox"]:checked')).map(cb=>cb.dataset.email);
+  if(checked.length===0){ alert('No items selected'); return; }
+  try{ await navigator.clipboard.writeText(checked.join('\n')); clickSound(); doConfetti(); alert('Copied selected'); } catch(e){ alert('Copy failed'); }
+});
+
+/* download helpers */
+function downloadFile(filename, text){
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+downloadTxt.addEventListener('click', ()=> {
+  if(currentResults.length===0){ alert('No results'); return; }
+  const txt = currentResults.join('\n'); downloadFile('gmail-dot-variants.txt', txt); clickSound();
+});
+downloadCsv.addEventListener('click', ()=> {
+  if(currentResults.length===0){ alert('No results'); return; }
+  const csv = currentResults.map(x => `"${x.replace(/"/g,'""')}"`).join('\n'); downloadFile('gmail-dot-variants.csv', csv); clickSound();
+});
+downloadJson.addEventListener('click', ()=> {
+  if(currentResults.length===0){ alert('No results'); return; }
+  downloadFile('gmail-dot-variants.json', JSON.stringify(currentResults, null, 2)); clickSound();
+});
+
+/* Share (WhatsApp) */
+shareBtn.addEventListener('click', ()=>{
+  if(currentResults.length===0){ alert('No results'); return; }
+  const text = encodeURIComponent(currentResults.join('\n'));
+  const url = `https://wa.me/?text=${text}`;
+  window.open(url, '_blank');
+});
+
+/* Save / Load */
+saveBtn.addEventListener('click', ()=>{
+  if(currentResults.length===0){ alert('No results to save'); return; }
+  const key = prompt('Give a name for this saved set (short):');
+  if(!key) return;
+  const saved = JSON.parse(localStorage.getItem('gd_saved_sets')||'{}');
+  saved[key] = currentResults;
+  localStorage.setItem('gd_saved_sets', JSON.stringify(saved));
+  renderSavedList();
+  alert('Saved');
+});
+function renderSavedList(){
+  savedList.innerHTML = '';
+  const saved = JSON.parse(localStorage.getItem('gd_saved_sets')||'{}');
+  const keys = Object.keys(saved);
+  if(keys.length===0){ savedList.innerHTML='<div class="muted">No saved sets</div>'; return; }
+  keys.forEach(k=>{
+    const div = document.createElement('div'); div.className='saved-item';
+    const left = document.createElement('div'); left.textContent=k + ' (' + saved[k].length + ')';
+    const right = document.createElement('div'); right.style.display='flex'; right.style.gap='6px';
+    const load = document.createElement('button'); load.className='ghost small'; load.textContent='Load';
+    load.addEventListener('click', ()=>{ currentResults = saved[k].slice(); renderResults(currentResults); });
+    const del = document.createElement('button'); del.className='ghost small'; del.textContent='Delete';
+    del.addEventListener('click', ()=>{ if(confirm('Delete saved set?')){ delete saved[k]; localStorage.setItem('gd_saved_sets', JSON.stringify(saved)); renderSavedList(); }});
+    right.appendChild(load); right.appendChild(del);
+    div.appendChild(left); div.appendChild(right); savedList.appendChild(div);
+  });
+}
+loadBtn.addEventListener('click', ()=> renderSavedList());
+clearSavedBtn.addEventListener('click', ()=>{ if(confirm('Clear all saved sets?')){ localStorage.removeItem('gd_saved_sets'); renderSavedList(); }});
+
+/* Clear results */
+clearBtn.addEventListener('click', ()=>{ if(confirm('Clear current results?')){ currentResults=[]; renderResults([]); countEl.textContent='0'; showingEl.textContent='0'; }});
+
+/* generate triggers */
+generateBtn.addEventListener('click', doGenerate);
+generateBtn2.addEventListener('click', doGenerate);
+randomBtn.addEventListener('click', doRandomize);
+
+/* initial render */
+renderResults([]); renderSavedList();
+
+/* update meta on username change */
+username.addEventListener('input', updateMeta);
+
+/* optional keyboard shortcuts */
+document.addEventListener('keydown', (e)=>{
+  if(e.ctrlKey && e.key.toLowerCase()==='g'){ e.preventDefault(); doGenerate(); }
+  if(e.ctrlKey && e.key.toLowerCase()==='c'){ /* ctrl+c used normally */ }
+});
+
+/* quick safety */
+limitEl.addEventListener('change', ()=>{
+  let v = parseInt(limitEl.value)||200;
+  if(v>HARD_LIMIT){ if(!confirm('Limit exceeds safety threshold. Continue?')) v = HARD_LIMIT; }
+  limitEl.value = Math.max(1, Math.min(v, HARD_LIMIT));
+});
+
+/* when clicking any button, short click sound */
+document.querySelectorAll('button').forEach(b => b.addEventListener('click', ()=>{ try{ clickSound(); } catch(e){} }));
+
+</script>
+</body>
+</html>
